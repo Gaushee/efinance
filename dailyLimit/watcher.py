@@ -7,6 +7,7 @@ import efinance as ef
 from dataclasses import dataclass
 from datetime import datetime
 import rich
+from dailyLimit import notify
 
 requests.packages.urllib3.util.ssl_.DEFAULT_CIPHERS = 'ALL:@SECLEVEL=1'
 
@@ -167,7 +168,8 @@ class Strategy:
             if tip == ZT_TIP or (
                     tip == ZT_KEEP_TIP
                     and pre_info.zt_keep_seconds <= ZT_NOTICE_MAX_SECONDS):
-                msg = f'股票代码: {stock_code}\n股票名称: {stock_name}\n? 封单情况 ?\n{buy_str}\n? {tip} ?\n? 涨停保持秒数: {pre_info.zt_keep_seconds} ?'
+                msg = f'股票代码: {stock_code}\n股票名称: {stock_name}\n- 封单情况 -\n{buy_str}\n- {tip} -\n- 涨停保持秒数: {pre_info.zt_keep_seconds} -'
+                notify.send_text(msg)
                 rich.print(msg)
 
 
