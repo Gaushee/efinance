@@ -30,6 +30,24 @@ class StockQuoteInfo:
     latest_zt_dt: datetime
     # * 最新非涨停时间
     latest_nzt_dt: datetime
+    # * 总市值
+    total_market_value: float
+    # * 流通市值
+    circulating_market_value: float
+    # * 换手率
+    turnover_rate: float
+    # * 成交量
+    trading_volume: float
+    # * 成交额
+    trading_amount: float
+    # * 卖1价
+    sell_1_price: float
+    # * 买1价
+    buy_1_price: float
+    # * 卖1数量
+    sell_1_count: float
+    # * 买1数量
+    buy_1_count: float
 
     @property
     def zt_keep_seconds(self) -> int:
@@ -101,7 +119,7 @@ class Strategy:
     def next(self) -> None:
         dt = self.clock.dt
 
-        quotes = ef.stock.get_realtime_quotes()
+        quotes = ef.stock.get_realtime_quotes('沪深A股')
         quotes.index = quotes['股票代码'].values
         quotes = quotes[quotes['涨跌幅'] != '-']
         # * 初步选出即将涨停的股票
@@ -132,7 +150,16 @@ class Strategy:
                                           top_price=top_price,
                                           bottom_price=bottom_price,
                                           latest_nzt_dt=dt,
-                                          latest_zt_dt=None)
+                                          latest_zt_dt=None,
+                                          total_market_value=row['总市值'],
+                                          circulating_market_value=row['流通市值'],
+                                          turnover_rate=sn['换手率'],
+                                          trading_volume=sn['成交量'],
+                                          trading_amount=sn['成交额'],
+                                          sell_1_price=sn['卖1价'],
+                                          buy_1_price=sn['买1价'],
+                                          sell_1_count=sn['卖1数量'],
+                                          buy_1_count=sn['买1数量'])
                 self.stock_code_info[stock_code] = pre_info
             buy_list = []
             for i in range(1, 6):
@@ -168,7 +195,25 @@ class Strategy:
             if tip == ZT_TIP or (
                     tip == ZT_KEEP_TIP
                     and pre_info.zt_keep_seconds <= ZT_NOTICE_MAX_SECONDS):
-                msg = f'股票代码: {stock_code}\n股票名称: {stock_name}\n- 封单情况 -\n{buy_str}\n- {tip} -\n- 涨停保持秒数: {pre_info.zt_keep_seconds} -'
+
+                # 排除一些不符合策略的涨停股票
+                # 市值不在10亿到1000亿的
+                if pre_info.total_market_value < 10 * 10000 * 10000 or pre_info.total_market_value > 1000 * 10000 * 10000:
+                    continue
+                # 股票价格在3-20元
+                if pre_info.price > 20.0 or pre_info.price < 3:
+                    continue
+                # 换手率超过5%的
+                if pre_info.turnover_rate > 5.0:
+                    continue
+                # 成交额超过总市值的10%
+                if pre_info.trading_amount / pre_info.total_market_value > 0.1:
+                    continue
+                # 买1价挂单总额小于总市值的0.1%需要撤单不继续挂单
+                if (pre_info.buy_1_count * 100 * pre_info.buy_1_price) / pre_info.total_market_value < 0.005:
+                    continue
+
+                msg = f'股票代码: {stock_code}\n股票名称: {stock_name}\n总市值: {pre_info.total_market_value}\n换手率: {pre_info.turnover_rate}\n成交量: {pre_info.trading_volume}\n成绩额: {pre_info.trading_amount}\n最新价: {pre_info.price}\n- 封单情况 -\n{buy_str}\n- {tip} -\n- 涨停保持秒数: {pre_info.zt_keep_seconds} -'
                 # notify.send_text(msg)
                 rich.print(msg)
 
