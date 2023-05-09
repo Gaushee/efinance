@@ -3,7 +3,7 @@ from wechat_work import WechatWork
 corpid = 'wwd9b77516c3c5063e'
 appid = '1000003'
 corpsecret = 'EE6KhSKrId17rb4Vajzae-dbveJ14iqvD5v3utWy9QA'
-users = ['GaoXi', 'SongYaZhou']
+users = ['GaoXi']
 w = WechatWork(corpid=corpid, appid=appid, corpsecret=corpsecret)
 # 发送文本
 #w.send_text('Hello World!', users)

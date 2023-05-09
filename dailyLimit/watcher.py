@@ -169,7 +169,7 @@ class Strategy:
                     tip == ZT_KEEP_TIP
                     and pre_info.zt_keep_seconds <= ZT_NOTICE_MAX_SECONDS):
                 msg = f'股票代码: {stock_code}\n股票名称: {stock_name}\n- 封单情况 -\n{buy_str}\n- {tip} -\n- 涨停保持秒数: {pre_info.zt_keep_seconds} -'
-                notify.send_text(msg)
+                # notify.send_text(msg)
                 rich.print(msg)
 
 
