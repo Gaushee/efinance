@@ -123,7 +123,7 @@ class Strategy:
         quotes.index = quotes['股票代码'].values
         quotes = quotes[quotes['涨跌幅'] != '-']
         # * 初步选出即将涨停的股票
-        quotes = quotes[quotes['涨跌幅'] > 7]
+        quotes = quotes[quotes['涨跌幅'] > 8]
         if len(quotes) == 0:
             return
         sns = get_snapshot_fast(quotes.index.values)
@@ -201,20 +201,24 @@ class Strategy:
                 if pre_info.total_market_value < 10 * 10000 * 10000 or pre_info.total_market_value > 1000 * 10000 * 10000:
                     continue
                 # 股票价格在3-20元
-                if pre_info.price > 20.0 or pre_info.price < 3:
+                if pre_info.price < 3 or pre_info.price > 20.0:
                     continue
-                # 换手率超过5%的
-                if pre_info.turnover_rate > 5.0:
+                # 换手率超过15%的
+                if pre_info.turnover_rate < 5.0 or pre_info.turnover_rate > 15.0:
                     continue
-                # 成交额超过总市值的10%
-                if pre_info.trading_amount / pre_info.total_market_value > 0.1:
+                # 成交额超过总市值的5%-15%
+                p = pre_info.trading_amount / pre_info.total_market_value
+                if p < 0.05 or p > 0.15:
                     continue
-                # 买1价挂单总额小于总市值的0.1%需要撤单不继续挂单
-                if (pre_info.buy_1_count * 100 * pre_info.buy_1_price) / pre_info.total_market_value < 0.005:
+                # 买1价挂单总额小于总市值的0.5%需要撤单不继续挂单
+                if (pre_info.buy_1_count * 100 * pre_info.buy_1_price
+                    ) / pre_info.total_market_value < 0.005:
+                    continue
+                if (pre_info.zt_keep_seconds < 30):
                     continue
 
-                msg = f'股票代码: {stock_code}\n股票名称: {stock_name}\n总市值: {pre_info.total_market_value}\n换手率: {pre_info.turnover_rate}\n成交量: {pre_info.trading_volume}\n成绩额: {pre_info.trading_amount}\n最新价: {pre_info.price}\n- 封单情况 -\n{buy_str}\n- {tip} -\n- 涨停保持秒数: {pre_info.zt_keep_seconds} -'
-                # notify.send_text(msg)
+                msg = f'股票代码: {stock_code}\n股票名称: {stock_name}\n总市值: {pre_info.total_market_value}\n换手率: {pre_info.turnover_rate}\n成交量: {pre_info.trading_volume}\n成绩额: {pre_info.trading_amount}\n最新价: {pre_info.price}\n- 封单情况 -\n{buy_str}\n- {tip} -\n- 涨停保持秒数: {pre_info.zt_keep_seconds} -\n- 更新时间: {dt} -'
+                notify.send_text(msg)
                 rich.print(msg)
 
 
@@ -226,7 +230,7 @@ ZT_TIP = '刚涨停'
 ZT_KEEP_TIP = '保持涨停'
 ZT_BREAK_TIP = '涨停炸板'
 # * 保持涨停通知超时时间 涨停保持秒数超过它则不做通知
-ZT_NOTICE_MAX_SECONDS = 60
+ZT_NOTICE_MAX_SECONDS = 33
 clock = Clock()
 
 
