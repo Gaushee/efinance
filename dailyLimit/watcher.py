@@ -133,9 +133,9 @@ class Strategy:
         # 股票价格不在3-20元
         quotes = quotes[(quotes['最新价'] > 3.0) & (quotes['最新价'] < 20.0)]
         # 换手率不在5%-10%
-        quotes = quotes[(quotes['换手率'] > 5.0) & (quotes['换手率'] < 10.0)]
+        # quotes = quotes[(quotes['换手率'] > 5.0) & (quotes['换手率'] < 10.0)]
         # 成交额总市值不超过15%        
-        quotes = quotes[(quotes['成交额']/quotes['总市值']) < 0.15]
+        # quotes = quotes[(quotes['成交额'] / quotes['总市值']) < 0.15]
 
         if len(quotes) == 0:
             return
@@ -209,13 +209,13 @@ class Strategy:
                     tip == ZT_KEEP_TIP
                     and pre_info.zt_keep_seconds <= ZT_NOTICE_MAX_SECONDS):
 
-                # 买1价挂单总额小于总市值的0.5%需要撤单不继续挂单
+                # 买1价挂单总额小于总市值的0.5%需要撤单不继续挂单,还要关注大单出货，频繁出货也需要撤单
                 if (pre_info.buy_1_count * 100 * pre_info.buy_1_price
                     ) / pre_info.total_market_value < 0.005:
                     continue
 
-                msg = f'股票代码: {stock_code}\n股票名称: {stock_name}\n总市值: {pre_info.total_market_value}\n换手率: {pre_info.turnover_rate}\n成交量: {pre_info.trading_volume}\n成绩额: {pre_info.trading_amount}\n最新价: {pre_info.price}\n- 封单情况 -\n{buy_str}\n- {tip} -\n- 涨停保持秒数: {pre_info.zt_keep_seconds} -'
-                # notify.send_text(msg)
+                msg = f'股票代码: {stock_code}\n股票名称: {stock_name}\n总市值: {pre_info.total_market_value}\n换手率: {pre_info.turnover_rate}\n成交量: {pre_info.trading_volume}\n成绩额: {pre_info.trading_amount}\n最新价: {pre_info.price}\n- 封单情况 -\n{buy_str}\n- {tip} -\n- 涨停保持秒数: {pre_info.zt_keep_seconds} -\n{dt}'
+                notify.send_text(msg)
                 rich.print(msg)
 
 
@@ -227,7 +227,7 @@ ZT_TIP = '刚涨停'
 ZT_KEEP_TIP = '保持涨停'
 ZT_BREAK_TIP = '涨停炸板'
 # * 保持涨停通知超时时间 涨停保持秒数超过它则不做通知
-ZT_NOTICE_MAX_SECONDS = 2
+ZT_NOTICE_MAX_SECONDS = 1
 clock = Clock()
 
 
